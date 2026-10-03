@@ -1,44 +1,46 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactApp", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseCors("ReactApp");
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
+app.MapPost("/api/quote", (QuoteRequest request) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    if (string.IsNullOrWhiteSpace(request.ProductName) ||
+        request.Price < 0 ||
+        request.Quantity < 1)
+    {
+        return Results.BadRequest("Enter a product name, valid price, and quantity.");
+    }
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    var subtotal = request.Price * request.Quantity;
+    var discount = request.Quantity >= 10 ? subtotal * 0.10m : 0m;
+    var discountedSubtotal = subtotal - discount;
+    var tax = discountedSubtotal * 0.07m;
+    var total = discountedSubtotal + tax;
+
+    return Results.Ok(new
+    {
+        request.ProductName,
+        request.Price,
+        request.Quantity,
+        Subtotal = subtotal,
+        Discount = discount,
+        Tax = tax,
+        Total = total
+    });
+});
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+record QuoteRequest(string ProductName, decimal Price, int Quantity);
