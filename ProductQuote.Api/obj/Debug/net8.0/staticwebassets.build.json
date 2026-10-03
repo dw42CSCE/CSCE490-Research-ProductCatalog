@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "Vr7sUbZUg1OYJvnrwd7YxCUxlE1wfnUO8ESV4YHV4ok=",
+  "Source": "ProductQuote.Api",
+  "BasePath": "_content/ProductQuote.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
